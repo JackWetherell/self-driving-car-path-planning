@@ -157,6 +157,7 @@ int main()
           for (int i = 0; i < sensor_fusion.size(); i++)
           {
             float d = sensor_fusion[i][6];
+
             // Is the car in my lane?
             if(d < (2+4*lane+2) && d > (2+4*lane-2))
             {
@@ -164,27 +165,71 @@ int main()
               double vy = sensor_fusion[i][4];
               double check_speed = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
               double check_car_s = sensor_fusion[i][5];
+              double fut_check_car_s = check_car_s + ((double)prev_size*0.02*check_speed);
 
-              check_car_s += ((double)prev_size*0.02*check_speed);
-
-              if((check_car_s > car_s) && ((check_car_s - car_s < 30)))
+              if((fut_check_car_s > car_s) && ((fut_check_car_s - car_s < 30)))
               {
                 too_close = true;
-                if (lane > 0)
+                bool safe = false;
+
+                // Try to change to the left
+                if (safe == false and lane > 0)
                 {
-                  lane = 0;
+                  safe = true;
+                  int target_lane = lane - 1;
+                  for (int j = 0; j < sensor_fusion.size(); j++)
+                  {
+                    double other_s = sensor_fusion[j][5];
+                    double other_d = sensor_fusion[j][6];
+                    if(other_d < (2+4*target_lane+2) && other_d > (2+4*target_lane-2))
+                    {
+                      if((other_s > car_s - 30) && ((other_s < car_s + 20)))
+                      { 
+                        safe = false;
+                      }
+                    }
+                  }
+                  if (safe == true)
+                  {
+                    lane = target_lane;
+                  }
                 }
+
+                if (safe == false and lane < 2)
+                {
+                  safe = true;
+                  int target_lane = lane + 1;
+                  for (int j = 0; j < sensor_fusion.size(); j++)
+                  {
+                    double other_s = sensor_fusion[j][5];
+                    double other_d = sensor_fusion[j][6];
+                    if(other_d < (2+4*target_lane+2) && other_d > (2+4*target_lane-2))
+                    {
+                      if((other_s > car_s - 30) && ((other_s < car_s + 20)))
+                      { 
+                        safe = false;
+                      }
+                    }
+                  }
+                  if (safe == true)
+                  {
+                    lane = target_lane;
+                  }
+                }
+
+
+
               }
             }
           }
 
           if (too_close)
           {
-            ref_vel -= 0.224;
+            ref_vel -= 0.500; // 0.224;
           }
           else if (ref_vel < 49.5)
           {
-            ref_vel += 0.224;
+            ref_vel += 0.500; // 0.224;
           }
 
           vector<double> pstx;
