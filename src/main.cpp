@@ -18,9 +18,128 @@ using std::vector;
 using std::cout;
 using std::endl;
 
-// Define constants
+
 int lane = 1;               // Starting lane
 double ref_vel = 0;         // Reference velocity
+
+
+// Define constants
+double TIME_STEP = 0.02;
+double MERGE_DISTANCE = 30.0;
+double CLOSE_DISTANCE = 25.0;
+int INITIAL_LANE = 1;
+
+
+class Point
+{
+  public:
+    double x;
+    double y;
+    Point()
+    {
+      this->x = 0.0;
+      this->y = 0.0;
+    }
+    Point(double x, double y)
+    {
+      this->x = x;
+      this->y = y;
+    }
+};
+
+
+class Car
+{
+  private:
+    Point velocity;
+  public:
+    double speed;
+    float d;
+    double s;
+    double future_s;
+    Car(double velocity_x, double velocity_y, float d, double s, int prev_size);
+    bool is_in_lane(int lane);
+    bool is_too_close(double s);
+    bool can_be_merged(double s);
+};
+
+
+Car::Car(double velocity_x, double velocity_y, float d, double s, int prev_size)
+{
+  this->velocity.x = velocity_x;
+  this->velocity.y = velocity_y;
+  this->speed = sqrt(pow(this->velocity.x, 2.0) + pow(this->velocity.y, 2.0));
+  this->d = d;
+  this->s = s;
+  this->future_s = this->s + ((double)prev_size*TIME_STEP*this->speed);
+}
+
+bool Car::is_in_lane(int lane)
+{
+  if (this->d < (2+4*lane+2) && this->d > (2+4*lane-2))
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+
+bool Car::is_too_close(double s)
+{
+  if ((this->future_s > s) && (this->future_s - s < CLOSE_DISTANCE))
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+
+bool Car::can_be_merged(double s)
+{
+  if ((this->s > s - MERGE_DISTANCE) && (this->s < s + MERGE_DISTANCE))
+  {
+    return false;
+  }
+  else
+  {
+    return true;
+  }
+}
+
+
+class AutonomousCar
+{
+  public:
+    Point position;
+    double s;
+    double d;
+    double yaw;
+    double speed;
+    int lane;
+    bool too_close;
+    bool safe;
+    AutonomousCar(double x, double y, double s, double d, double yaw, double speed);
+};
+
+
+AutonomousCar::AutonomousCar(double x, double y, double s, double d, double yaw, double speed)
+{
+  this->position.x = x;
+  this->position.y = y;
+  this->s = s;
+  this->d = d;
+  this->yaw = yaw;
+  this->speed = speed;
+  this->lane = INITIAL_LANE;
+  this->too_close = false;
+  this->safe = false;
+}
 
 
 int main()
