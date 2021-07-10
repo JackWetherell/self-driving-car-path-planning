@@ -1,0 +1,37 @@
+#######################
+### Project Ruberic ###
+#######################
+
+- The code compiles correctly. -> Yes.
+- The car is able to drive at least 4.32 miles without incident. -> Yes, checked up to 5 miles, see screenshot.png for details.
+- The car drives according to the speed limit. -> Yes, the car doesn't drive faster than the speed limit. Also the car isn't driving much slower than speed limit unless obstructed by traffic.
+- Max Acceleration and Jerk are not Exceeded. -> Yes, the car does not exceed a total acceleration of 10 m/s^2 and a jerk of 10 m/s^3.
+- Car does not have collisions. -> Yes, the car does not come into contact with any of the other cars on the road.
+- Car stays in its lane, except for the time between changing lanes. -> Yes, the car doesn't spend more than a 3 second length out side the lane lanes during changing lanes, and every other time the car stays inside one of the 3 lanes on the right hand side of the road.
+- The car is able to change lanes -> Yes, the car is able to smoothly change lanes when it makes sense to do so, such as when behind a slower moving car and an adjacent lane is clear of other traffic.
+
+#######################
+###   Reflection    ###
+#######################
+
+My method of path planning and trajectory generation was developed and built upon the spline based method demonstrated in the project Q+A.
+My goal was to write a simple and easily extendable method by writing all the code using a generalised class structure, so more complex components can be easily integrated.
+I only add points to the path from the last calculation, and so no need to recalculate new points.
+My solution has the following pipeline:
+[Get map, car and sensor fusion data and create AV object] 
+-> Behaviour planning stage
+    -> Determine if AV is in the same lane as any other cars.
+    -> If so, determine if we are getting too close.
+    -> If so, change the state to indicate that we are too close to the car in front.
+    -> If we are too close to the car in fron try to overtake to the left and then right (if not already in the leftmost lane)
+        -> Check the cars in the target lane to see if their current point in state space allows for a safe line change, using motion prediction to estimate where the car will be in the future when the lane change will take place.
+        -> If so, flag that the state indicates that the target lane has changed.
+        -> If not, simply flag that the state indicates we need to react by decelerating.
+    -> If we are not getting too close, set the target speed to just under the speed limit.
+-> Trajectory generation stage.
+    -> Using the target speed and lane outputted from the behaviour planning stage build a set of 5 points to generate a smooth curve using splines.
+    -> Start with the two points of the AVs current and previous location to ensure spline begins with the correct heading.
+    -> Add three future waypoints based on the frenet coordinated based on the target s (based on target speed) and d (based on target lane).
+    -> Transform the waypoints to the AVs reference frame.
+    -> Fit the splines to the waypoints using spline.h to yield a smooth curve that realises the goal state.
+    -> Add these points to the path from the previous calculation.
